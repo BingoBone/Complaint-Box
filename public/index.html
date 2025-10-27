@@ -36,23 +36,16 @@
 
   <button id="adminBtn">Go to Admin Panel</button>
 
-  <script>
-    async function handleAdminAccess() {
-      const password = prompt("Enter admin password:");
-      if (!password) return;
-
-      const res = await fetch("/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password })
-      });
-
-      if (res.ok) {
-        window.location.href = "/admin.html";
-      } else {
-        alert("Incorrect password!");
-      }
+<script>
+  document.getElementById("adminBtn").addEventListener("click", () => {
+    const password = prompt("Enter admin password:");
+    if (password === "letmein123") {
+      window.location.href = "/admin.html";
+    } else {
+      alert("Incorrect password!");
     }
+  });
+</script>
 
     document.getElementById("adminBtn").addEventListener("click", handleAdminAccess);
   </script>
