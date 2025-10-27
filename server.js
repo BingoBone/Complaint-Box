@@ -9,21 +9,26 @@ app.use(bodyParser.json());
 app.use(express.static("public")); // serve HTML/CSS/JS files
 
 // PostgreSQL connection
-// Make sure to set DATABASE_URL in Render environment variables
+// Make sure DATABASE_URL is set in Render environment variables
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false } // Required for Render Postgres
+  ssl: { rejectUnauthorized: false } // required for Render Postgres
 });
 
 // Create table if it doesn't exist
 (async () => {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS complaints (
-      id SERIAL PRIMARY KEY,
-      text TEXT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS complaints (
+        id SERIAL PRIMARY KEY,
+        text TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log("Table checked/created successfully");
+  } catch (err) {
+    console.error("Error creating table:", err);
+  }
 })();
 
 // Route to submit a complaint
@@ -60,7 +65,7 @@ app.get("/complaints", async (req, res) => {
   }
 });
 
-// Optional: password check route for admin login (frontend JS)
+// Optional: password check route for frontend admin login
 app.post("/login", (req, res) => {
   const { password } = req.body;
   if (password === "letmein123") {
