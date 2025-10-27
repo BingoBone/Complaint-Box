@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Complaint Box</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 50px;
+    }
+    textarea {
+      width: 300px;
+      height: 100px;
+      padding: 10px;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      background: #007BFF;
+      border: none;
+      color: white;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>The Complaint Box</h1>
+  <textarea id="complaint" placeholder="Enter your complaint here..."></textarea><br>
+  <button onclick="submitComplaint()">Send Complaint</button>
+
+  <script>
+    async function submitComplaint() {
+      const text = document.getElementById("complaint").value.trim();
+      if (!text) {
+        alert("Please enter a complaint.");
+        return;
+      }
+
+      const response = await fetch("/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ complaint: text })
+      });
+
+      if (response.ok) {
+        alert("Complaint submitted successfully!");
+        document.getElementById("complaint").value = "";
+      } else {
+        alert("Error submitting complaint.");
+      }
+    }
+  </script>
+</body>
+</html>
