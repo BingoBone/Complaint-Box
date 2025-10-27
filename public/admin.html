@@ -1,35 +1,76 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Complaints Admin</title>
+  <title>Complaint Box</title>
   <style>
-    body { font-family: Arial; padding: 20px; background: #f5f5f5; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 10px; }
-    th { background: #007BFF; color: white; }
+    body {
+      font-family: Arial;
+      background: #f5f5f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 50px;
+    }
+    textarea {
+      width: 300px;
+      height: 100px;
+      padding: 10px;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+    button {
+      padding: 10px 20px;
+      background: #007BFF;
+      border: none;
+      color: white;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
-  <h1>All Complaints</h1>
-  <table id="complaintsTable">
-    <tr><th>ID</th><th>Complaint</th><th>Date</th></tr>
-  </table>
+  <h1>The Complaint Box</h1>
+  <textarea id="complaint" placeholder="Enter your complaint here..."></textarea><br>
+  <button onclick="submitComplaint()">Send Complaint</button>
+
+  <button id="adminBtn">Go to Admin Panel</button>
+
+<script>
+  document.getElementById("adminBtn").addEventListener("click", () => {
+    const password = prompt("Enter admin password:");
+    if (password === "letmein123") {
+      window.location.href = "/admin.html";
+    } else {
+      alert("Incorrect password!");
+    }
+  });
+</script>
+
+    document.getElementById("adminBtn").addEventListener("click", handleAdminAccess);
+  </script>
 
   <script>
-    async function loadComplaints() {
-      const res = await fetch("/complaints");
-      const complaints = await res.json();
-      const table = document.getElementById("complaintsTable");
+    async function submitComplaint() {
+      const text = document.getElementById("complaint").value.trim();
+      if (!text) {
+        alert("Please enter a complaint.");
+        return;
+      }
 
-      complaints.forEach(c => {
-        const row = table.insertRow();
-        row.insertCell(0).textContent = c.id;
-        row.insertCell(1).textContent = c.text;
-        row.insertCell(2).textContent = c.created_at;
+      const response = await fetch("/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ complaint: text })
       });
-    }
 
-    loadComplaints();
+      if (response.ok) {
+        alert("Complaint submitted successfully!");
+        document.getElementById("complaint").value = "";
+      } else {
+        alert("Error submitting complaint.");
+      }
+    }
   </script>
 </body>
 </html>
