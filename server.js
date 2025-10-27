@@ -2,7 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const sqlite3 = require("sqlite3").verbose();
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(bodyParser.json());
@@ -37,6 +37,15 @@ app.get("/complaints", (req, res) => {
     if (err) return res.status(500).send("Database error");
     res.json(rows);
   });
+});
+
+app.post("/login", (req, res) => {
+  const { password } = req.body;
+  if (password === "iwannasee") {
+    res.json({ success: true });
+  } else {
+    res.status(401).json({ success: false });
+  }
 });
 
 app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
