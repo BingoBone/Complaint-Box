@@ -1,51 +1,77 @@
+// server.js
 const express = require("express");
 const bodyParser = require("body-parser");
-const sqlite3 = require("sqlite3").verbose();
+const { Pool } = require("pg");
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(bodyParser.json());
-app.use(express.static("public")); // serve your HTML file
+app.use(express.static("public")); // serve HTML/CSS/JS files
 
-// Create or open a database
-const db = new sqlite3.Database("./complaints.db");
+// PostgreSQL connection
+// Make sure to set DATABASE_URL in Render environment variables
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false } // Required for Render Postgres
+});
 
-// Create table if it doesn’t exist
-db.run(`
-  CREATE TABLE IF NOT EXISTS complaints (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    text TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-  )
-`);
+// Create table if it doesn't exist
+(async () => {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS complaints (
+      id SERIAL PRIMARY KEY,
+      text TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+})();
 
-// Route to handle complaint submission
-app.post("/submit", (req, res) => {
+// Route to submit a complaint
+app.post("/submit", async (req, res) => {
   const { complaint } = req.body;
   if (!complaint) return res.status(400).send("Empty complaint");
 
-  db.run("INSERT INTO complaints (text) VALUES (?)", [complaint], (err) => {
-    if (err) return res.status(500).send("Database error");
+  try {
+    await pool.query("INSERT INTO complaints (text) VALUES ($1)", [complaint]);
     res.status(200).send("Complaint saved");
-  });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Database error");
+  }
 });
 
-// Route to view complaints
-app.get("/complaints", (req, res) => {
-  db.all("SELECT * FROM complaints ORDER BY created_at DESC", [], (err, rows) => {
-    if (err) return res.status(500).send("Database error");
+// Password-protected route to view complaints
+app.get("/complaints", async (req, res) => {
+  const auth = req.headers.authorization;
+
+  // Simple username:password authentication
+  const correctAuth = "Basic " + Buffer.from("admin:secret123").toString("base64");
+  if (!auth || auth !== correctAuth) {
+    res.setHeader("WWW-Authenticate", "Basic realm='Complaints'");
+    return res.status(401).send("Access denied");
+  }
+
+  try {
+    const { rows } = await pool.query("SELECT * FROM complaints ORDER BY created_at DESC");
     res.json(rows);
-  });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Database error");
+  }
 });
 
+// Optional: password check route for admin login (frontend JS)
 app.post("/login", (req, res) => {
   const { password } = req.body;
-  if (password === "iwannasee") {
+  if (password === "letmein123") {
     res.json({ success: true });
   } else {
     res.status(401).json({ success: false });
   }
 });
 
-app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
+// Start server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
